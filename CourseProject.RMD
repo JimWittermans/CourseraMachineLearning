@@ -37,11 +37,11 @@ Testing_Set                         <- read.csv(TestFile, na.strings=c("NA","#DI
 # Step 2: Explore the dataset
 ```{r}
 names(Training_Set)
-head(Training_Set)
+#head(Training_Set)
 summary(Training_Set)
 summary(Training_Set$classe)
 
-head(Testing_Set)
+#head(Testing_Set)
 ```
 # Step 3: Create Partition
 Now we know what the data set looks like, we can create a Paration. Leaving out about 40% of the data (p=0.6). All the Null values have already been removed when importing the file into the variables.
@@ -55,8 +55,8 @@ Test_Set_Var                        <- Training_Set[-Start_Train, ]
 Now we created the data partition. Lets see what the training and test set looks like. As we want to keep the training set var for later use, we'll store that in the Training_Set_Var_Keep.
 ```{r}
 
-head(Training_Set_Var)
-head(Test_Set_Var)
+#head(Training_Set_Var)
+#head(Test_Set_Var)
 
 Training_Set_Var_Keep               <- Training_Set_Var
 
