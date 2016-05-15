@@ -1,0 +1,107 @@
+---
+  title: "Coursera Machine Learning -- Course Project 2016"
+  output: html_document
+  keep_md: true
+---
+## Coursera Machine Learning // Course Project 2016
+
+# Introduction
+In this report we'll be checking data that is retrieved from popular activity trackers. The assignment is stated as follows:
+Using devices such as Jawbone Up, Nike FuelBand, and Fitbit it is now possible to collect a large amount of data about personal activity relatively inexpensively. These type of devices are part of the quantified self movement - a group of enthusiasts who take measurements about themselves regularly to improve their health, to find patterns in their behavior, or because they are tech geeks. One thing that people regularly do is quantify how much of a particular activity they do, but they rarely quantify how well they do it. In this project, your goal will be to use data from accelerometers on the belt, forearm, arm, and dumbell of 6 participants. They were asked to perform barbell lifts correctly and incorrectly in 5 different ways. More information is available from the website here: http://groupware.les.inf.puc-rio.br/har (see the section on the Weight Lifting Exercise Dataset).
+
+# Step 0: Install and/or load packages.
+```{r}
+# Loading KNITR, CARET, GGPLOT, RANDOMFOREST Libraries
+# Uncomment the install.packages line if you need to install them.
+# install.packages("knitr", "caret", "ggplot2", "randomFOrest")
+library(knitr)
+library(caret)
+library(ggplot2)
+library(randomForest)
+```
+
+# Step 1: Retrieving the dataset and loading it into variables for further processing.
+```{r}
+# Setting seed for reproducibility
+set.seed(777)
+
+# Load the variables
+TrainUrl                            <- "https://d396qusza40orc.cloudfront.net/predmachlearn/pml-training.csv"
+TestUrl                             <- "https://d396qusza40orc.cloudfront.net/predmachlearn/pml-testing.csv"
+TrainFile                           <- "pml-training.csv"
+TestFile                            <- "pml-testing.csv"
+
+Training_Set                        <- read.csv(TrainFile, na.strings=c("NA","#DIV/0!",""))
+Testing_Set                         <- read.csv(TestFile, na.strings=c("NA","#DIV/0!",""))
+```
+# Step 2: Explore the dataset
+```{r}
+names(Training_Set)
+head(Training_Set)
+summary(Training_Set)
+summary(Training_Set$classe)
+
+head(Testing_Set)
+```
+# Step 3: Create Partition
+Now we know what the data set looks like, we can create a Paration. Leaving out about 40% of the data (p=0.6). All the Null values have already been removed when importing the file into the variables.
+```{r}
+Start_Train                         <- createDataPartition(y=Training_Set$classe, p=0.6, list=FALSE)
+Training_Set_Var                    <- Training_Set[Start_Train, ]
+Test_Set_Var                        <- Training_Set[-Start_Train, ]
+
+```
+# Step 4: Re-explore dataset
+Now we created the data partition. Lets see what the training and test set looks like. As we want to keep the training set var for later use, we'll store that in the Training_Set_Var_Keep.
+```{r}
+
+head(Training_Set_Var)
+head(Test_Set_Var)
+
+Training_Set_Var_Keep               <- Training_Set_Var
+
+```
+# Step 5: Remove variables that contain mostly NA values.
+As a lot of the columns contain many NA values, we will remove these from our set. Function courtesy of beaulida2.
+```{r}
+
+for (i in 1:length(Training_Set_Var)) {
+  if (sum(is.na(Training_Set_Var[ , i])) / nrow(Training_Set_Var) >= .75) {
+    for (j in 1:length(Training_Set_Var_Keep)) {
+      if (length(grep(names(Training_Set_Var[i]), names(Training_Set_Var_Keep)[j]))==1) {
+        Training_Set_Var_Keep <- Training_Set_Var_Keep[ , -j]
+      }
+    }
+  }
+}
+head(Training_Set_Var_Keep)
+
+```
+# Step 6: Remove variables that can't be predictors.
+Now we will remove variables that can't be predictors.
+```{r}
+Training_Set_Complete               <- Training_Set_Var_Keep[,8:length(Training_Set_Var_Keep)]
+
+```
+# Step 7: Fit the actual model.
+```{r}
+set.seed(777)
+
+modFit                              <- randomForest(classe~., data = Training_Set_Complete)
+print(modFit)
+
+#cross validation on my testing data
+#out of sample error
+Predictor                           <- predict(modFit, Test_Set_Var, type = "class")
+confusionMatrix(Test_Set_Var$classe, Predictor)
+
+#in sample error
+Preditor_Train_Set                  <- predict(modFit, Training_Set_Var, type = "class")
+confusionMatrix(Training_Set_Var$classe, Preditor_Train_Set)
+
+```
+# Step 8: Show test results.
+```{r}
+Final_Predictor                     <- predict(modFit, Testing_Set, type = "class")
+print(Final_Predictor)
+```
